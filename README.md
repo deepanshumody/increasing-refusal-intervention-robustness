@@ -161,7 +161,4 @@ Defaults match the existing pipeline: `prune_layer_percentage=0.2`,
 `induce_refusal_threshold=0.0`, `steering_coeff=1.0`,
 `norm_threshold=0.01`, refusal-token set = `{ "I" }`.
 
-## Hardware
 
-A100 (40 GB) bf16. Llama-3.2-1B + frozen teacher + WildGuard-7B (via vLLM)
-fits comfortably.

@@ -1,8 +1,5 @@
 # Paper code: Increasing the Intervention-Robustness of Refusal
 
-Minimal from-scratch code that runs every experiment in icml2026.pdf, with
-implementation choices matched to the existing pipeline:
-
 - Hooks: pre-hook on layer input + self_attn output + mlp output (Arditi).
 - Mean penalty default = L2 (mean of (Δμ)²); cov penalty default = L2
   (Frobenius² / H²).

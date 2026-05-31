@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "intervention-robust-refusal"
+version = "0.1.0"
+description = "Code for: Increasing the Intervention-Robustness of Refusal in Open-Weight Language Models"
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Deepanshu Mody", email = "deepanshumody26@gmail.com" },
+  { name = "Acey Vogelstein" },
+  { name = "Jonathan Merchan" },
+]
+dependencies = [
+  "torch>=2.1",
+  "transformers>=4.40",
+  "datasets>=2.18",
+  "scikit-learn>=1.3",
+  "pandas>=2.0",
+  "pyarrow>=14.0",
+  "numpy>=1.24",
+]
+
+# WildGuard ships its own (heavy) vLLM dependency stack; keep it optional so
+# the rest of the code is installable in lightweight environments.
+[project.optional-dependencies]
+wildguard = ["wildguard"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

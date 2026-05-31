@@ -1,86 +1,22 @@
-"""Fine-tune GPT-2 small on IMDB with optional class-conditional matching loss.
+"""Fine-tune GPT-2 small on IMDB with an optional class-conditional matching loss.
 
-Matches the existing pipeline:
-  - tokenize the review text directly (no chat template)
-  - LM loss over the entire input (HF default, no masking)
-  - mean penalty default L2 (mean of (Δμ)²)
-  - cov penalty default L2 ((Δ²).sum()/H²)
-  - mixed batch readout: per-sample random assignment to last/random/chat with
-    `last_token_ratio`, `random_pool_ratio`, `chat_template_pool_ratio`
-  - multi-layer matching uses every transformer block output (hidden_states[1:])
+Sentiment proof-of-concept for §4.1. The loss is the standard causal-LM loss
+optionally augmented with a mean- or covariance-matching penalty over class-
+conditional pooled hidden states (positive vs. negative reviews). Tokenization
+is over raw review text — no chat template — and the LM loss covers the entire
+input (HuggingFace's default behavior with ``labels=input_ids``).
 """
+from __future__ import annotations
+
 import argparse
+
 import torch
-import torch.nn.functional as F
 from datasets import load_dataset
 from torch.utils.data import DataLoader
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast, get_linear_schedule_with_warmup
 
-from paper_code.shared.losses import (
-    compute_mean_penalty_with_type, compute_cov_penalty, _per_layer_penalty)
-
-
-def pooled_last_hidden(h, attn_mask):
-    m = attn_mask.unsqueeze(-1).float()
-    return (h * m).sum(1) / m.sum(1).clamp_min(1)
-
-
-def last_token_hidden(h, attn_mask):
-    last_idx = (attn_mask.sum(-1) - 1).clamp_min(0)
-    B, T, D = h.shape
-    idx = last_idx.view(B, 1, 1).expand(-1, 1, D)
-    return h.gather(1, idx).squeeze(1)
-
-
-def chat_template_pool_hidden(h, attn_mask, positions_str="-5,-4,-3,-2,-1"):
-    """Average representations at the given (negative) chat-template positions
-    (positions are relative to the last *non-pad* token per sample for right-padding)."""
-    positions = [int(x) for x in positions_str.split(",")]
-    last_idx = attn_mask.sum(-1) - 1
-    B, T, D = h.shape
-    out = []
-    for b in range(B):
-        idxs = [int((last_idx[b] + 1 + p).clamp_min(0).item()) for p in positions]
-        out.append(h[b, idxs].mean(0))
-    return torch.stack(out, 0)
-
-
-def mixed_batch_readout(h, attn_mask, random_pool_ratio, random_pool_token_coverage,
-                        last_token_ratio=0.0, chat_template_pool_ratio=0.0,
-                        chat_template_positions="-5,-4,-3,-2,-1"):
-    mean_pooled = pooled_last_hidden(h, attn_mask)
-    if random_pool_ratio == 0.0 and last_token_ratio == 0.0 and chat_template_pool_ratio == 0.0:
-        return mean_pooled
-
-    B, T, _ = h.shape
-    rand = torch.rand(B, device=h.device)
-    use_last = rand < last_token_ratio
-    use_random = (rand >= last_token_ratio) & (rand < last_token_ratio + random_pool_ratio)
-    use_chat = ((rand >= last_token_ratio + random_pool_ratio)
-                & (rand < last_token_ratio + random_pool_ratio + chat_template_pool_ratio))
-
-    result = mean_pooled.clone()
-    if use_last.any():
-        result[use_last] = last_token_hidden(h[use_last], attn_mask[use_last])
-    if use_random.any():
-        hs_r = h[use_random]; m_r = attn_mask[use_random]
-        n_r = hs_r.size(0)
-        n_valid = m_r.float().sum(1)
-        k = (random_pool_token_coverage * n_valid).ceil().clamp(min=1).long()
-        k_max = int(k.max().item())
-        gn = -torch.log(-torch.log(torch.rand(n_r, T, device=h.device) + 1e-10) + 1e-10)
-        gn = gn * m_r.float() - (1 - m_r.float()) * 1e9
-        _, top_idx = gn.topk(k_max, dim=1)
-        sm = torch.zeros(n_r, T, device=h.device)
-        for i in range(n_r):
-            sm[i, top_idx[i, :k[i]]] = 1.0
-        sm = sm.unsqueeze(-1)
-        rp = (hs_r.float() * sm).sum(1) / sm.sum(1).clamp(min=1.0)
-        result[use_random] = rp.to(h.dtype)
-    if use_chat.any():
-        result[use_chat] = chat_template_pool_hidden(
-            h[use_chat], attn_mask[use_chat], chat_template_positions).to(h.dtype)
-    return result
+from intervention_robust_refusal.shared.losses import per_layer_penalty
+from intervention_robust_refusal.shared.readouts import mixed_batch_readout
 
 
 def make_loader(tok, batch_size, max_len=256, max_samples=None, split="train"):
@@ -158,12 +94,12 @@ def main():
             mean_p = torch.tensor(0.0, device=device)
             cov_p = torch.tensor(0.0, device=device)
             if args.match == "mean":
-                mean_p = _per_layer_penalty(out.hidden_states, attn_mask, labels, pool_fn,
-                                            "mean", args.mean_penalty_type, multi_layer)
+                mean_p = per_layer_penalty(out.hidden_states, attn_mask, labels, pool_fn,
+                                           "mean", args.mean_penalty_type, multi_layer)
                 loss = loss + args.lambda_mean * mean_p
             elif args.match == "cov":
-                cov_p = _per_layer_penalty(out.hidden_states, attn_mask, labels, pool_fn,
-                                           "cov", args.cov_penalty_type, multi_layer)
+                cov_p = per_layer_penalty(out.hidden_states, attn_mask, labels, pool_fn,
+                                          "cov", args.cov_penalty_type, multi_layer)
                 loss = loss + args.lambda_cov * cov_p
 
             opt.zero_grad()

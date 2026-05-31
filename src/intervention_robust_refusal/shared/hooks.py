@@ -1,20 +1,28 @@
-"""Residual-stream capture and Arditi-style directional ablation hooks (Llama).
+"""Residual-stream capture and Arditi-style directional ablation hooks.
 
-Three hook sites per transformer layer (matches existing pipeline):
-  1. layer.register_forward_pre_hook   — residual-stream INPUT to the block
-  2. layer.self_attn output forward hook — attention output
-  3. layer.mlp output forward hook       — MLP output
+The Arditi et al. 2024 single-direction ablation projects out a (set of)
+direction(s) from the residual stream at *three* sites per transformer layer:
 
-Projection: a' = a - (a @ D^T) @ D, with D's rows mutually orthonormal.
-Use prepare_directions() to QR-orthonormalize a stack of raw direction vectors
-before installing hooks.
+    1. the residual-stream INPUT to the block (forward-pre-hook on the layer)
+    2. the self_attn submodule's output
+    3. the mlp submodule's output
+
+Why all three: ablating only the block input leaves attention and MLP free to
+re-write the direction back into the stream within the same layer. Hooking
+the two submodule outputs as well guarantees the direction is suppressed at
+every write site.
+
+The projection is the standard ``a' = a - (a @ D^T) @ D`` for an orthonormal
+direction matrix ``D``. ``prepare_directions`` QR-orthonormalises a stack of
+raw direction vectors so multi-direction ablation stays a true projector.
 """
+from __future__ import annotations
+
 from contextlib import contextmanager, nullcontext
 from typing import List
 
 import numpy as np
 import torch
-import torch.nn as nn
 
 
 def get_blocks(model):

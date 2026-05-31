@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+message: "If you use this software or build on the underlying paper, please cite it as below."
+title: "Increasing the Intervention-Robustness of Refusal in Open-Weight Language Models"
+authors:
+  - family-names: Mody
+    given-names: Deepanshu
+    email: deepanshumody26@gmail.com
+    affiliation: "New York University (M.S. Data Science, student)"
+  - family-names: Vogelstein
+    given-names: Acey
+    affiliation: "New York University (M.S. Data Science, student)"
+  - family-names: Merchan
+    given-names: Jonathan
+    affiliation: "New York University (Ph.D. Linguistics, student)"
+date-released: 2025-01-01
+license: Apache-2.0
+repository-code: "https://github.com/deepanshumody/increasing-refusal-intervention-robustness"
+type: software
+keywords:
+  - large language models
+  - interpretability
+  - alignment
+  - refusal
+  - concept erasure
+  - intervention robustness
+references:
+  - type: article
+    title: "Increasing the Intervention-Robustness of Refusal in Open-Weight Language Models"
+    authors:
+      - family-names: Mody
+        given-names: Deepanshu
+      - family-names: Vogelstein
+        given-names: Acey
+      - family-names: Merchan
+        given-names: Jonathan
+    year: 2025
+    notes: "Under review, International Conference on Machine Learning (ICML) 2025"

@@ -21,10 +21,9 @@ Per iteration k:
 Refusal-token set defaults to just "I" (Arditi's Llama-3 choice, token 40).
 """
 import argparse
+import json
 import math
 import os
-import json
-from contextlib import nullcontext
 
 import numpy as np
 import pandas as pd
@@ -32,11 +31,11 @@ import torch
 import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from paper_code.shared.hooks import (
+from intervention_robust_refusal.shared.hooks import (
     ResidualCapture, prepare_directions, ablation_context,
     ablation_context_from_list, add_block_input_addition_hook, get_blocks)
-from paper_code.shared.wildguard import load_classifier
-from paper_code.refusal.eval_refusal import evaluate_refusal
+from intervention_robust_refusal.shared.wildguard import load_classifier
+from intervention_robust_refusal.refusal.eval_refusal import evaluate_refusal
 
 
 def resolve_refusal_token_ids(tokenizer, token_strings=("I",)):
@@ -260,9 +259,6 @@ def run_iterated(args):
             break
 
         _, _, _, best_lyr, best_pos, best_delta, best_norm = chosen
-        if best_delta is None or best_norm is None:
-            print(f"  Stopping at iter {k+1}: no usable candidate")
-            break
         if k == 0:
             d1_norm = best_norm
 

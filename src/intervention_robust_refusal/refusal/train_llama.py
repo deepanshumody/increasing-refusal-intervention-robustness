@@ -15,9 +15,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
 
-from paper_code.shared.losses import (
-    compute_mean_penalty_with_type, compute_cov_penalty, _per_layer_penalty, kd_kl_loss)
-from paper_code.sentiment.train_gpt2 import mixed_batch_readout
+from intervention_robust_refusal.shared.losses import per_layer_penalty, kd_kl_loss
+from intervention_robust_refusal.shared.readouts import mixed_batch_readout
 
 
 class RefusalDataset(Dataset):
@@ -138,12 +137,12 @@ def main():
             mean_p = torch.tensor(0.0, device=device)
             cov_p = torch.tensor(0.0, device=device)
             if args.match == "mean":
-                mean_p = _per_layer_penalty(out.hidden_states, am, cls, pool_fn,
-                                            "mean", args.mean_penalty_type, multi_layer)
+                mean_p = per_layer_penalty(out.hidden_states, am, cls, pool_fn,
+                                           "mean", args.mean_penalty_type, multi_layer)
                 loss = loss + args.lambda_mean * mean_p
             elif args.match == "cov":
-                cov_p = _per_layer_penalty(out.hidden_states, am, cls, pool_fn,
-                                           "cov", args.cov_penalty_type, multi_layer)
+                cov_p = per_layer_penalty(out.hidden_states, am, cls, pool_fn,
+                                          "cov", args.cov_penalty_type, multi_layer)
                 loss = loss + args.lambda_cov * cov_p
 
             kd = torch.tensor(0.0, device=device)

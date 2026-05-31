@@ -11,9 +11,9 @@ import pandas as pd
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from paper_code.shared.hooks import ResidualCapture
-from paper_code.shared.probes import linear_probe, mlp_probe
-from paper_code.shared.wildguard import load_classifier, score_refusals
+from intervention_robust_refusal.shared.hooks import ResidualCapture
+from intervention_robust_refusal.shared.probes import linear_probe, mlp_probe
+from intervention_robust_refusal.shared.wildguard import load_classifier, score_refusals
 
 
 @torch.no_grad()

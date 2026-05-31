@@ -21,7 +21,7 @@ import torch
 from datasets import load_dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from paper_code.shared.wildguard import load_classifier, score_full
+from intervention_robust_refusal.shared.wildguard import load_classifier, score_full
 
 
 @torch.no_grad()

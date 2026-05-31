@@ -9,9 +9,9 @@ import torch
 from datasets import load_dataset
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 
-from paper_code.shared.hooks import ResidualCapture
-from paper_code.shared.probes import linear_probe, mlp_probe
-from paper_code.shared.erasure import leace_fit, leace_apply, inlp_fit, inlp_apply
+from intervention_robust_refusal.shared.hooks import ResidualCapture
+from intervention_robust_refusal.shared.probes import linear_probe, mlp_probe
+from intervention_robust_refusal.shared.erasure import leace_fit, leace_apply, inlp_fit, inlp_apply
 
 
 @torch.no_grad()

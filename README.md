@@ -1,8 +1,5 @@
 # Increasing the Intervention-Robustness of Refusal in Open-Weight LLMs
 
-Code for the ICML 2026 submission *Increasing the Intervention-Robustness of
-Refusal in Open-Weight Language Models*.
-
 **Authors.** Deepanshu Mody, Acey Vogelstein, Jonathan Merchan.
 All three contributed as students at New York University — Deepanshu Mody
 (M.S. Data Science), Acey Vogelstein (M.S. Data Science), Jonathan Merchan

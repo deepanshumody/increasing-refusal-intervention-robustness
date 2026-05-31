@@ -8,6 +8,10 @@ All three contributed as students at New York University — Deepanshu Mody
 (M.S. Data Science), Acey Vogelstein (M.S. Data Science), Jonathan Merchan
 (Ph.D. Linguistics). Correspondence: `deepanshumody26@gmail.com`.
 
+**▶ Animated explainer:** [refusal-robustness-explainer](https://deepanshumody.github.io/increasing-refusal-intervention-robustness/refusal-robustness-explainer.html)
+— a short walk-through of the threat model, the matching objective, and the
+iterated-ablation result. Source: [`docs/refusal-robustness-explainer.html`](./docs/refusal-robustness-explainer.html).
+
 ## What this is about
 
 [Arditi et al. (2024)](https://arxiv.org/abs/2406.11717) showed that refusal in

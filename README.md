@@ -50,13 +50,13 @@ src/intervention_robust_refusal/
 │   ├── erasure.py      # LEACE + INLP (post-hoc baselines, sentiment only)
 │   └── wildguard.py    # thin wrapper over the wildguard package
 ├── sentiment/
-│   ├── train_gpt2.py     # §4.1 — GPT-2 + matching loss on IMDB
+│   ├── train_gpt2.py     # GPT-2 + matching loss on IMDB (proof of concept)
 │   └── eval_sentiment.py # perplexity, mean gap, probe accuracy, LEACE/INLP
 └── refusal/
     ├── data_pipeline.py     # WildGuardMix → train/holdout parquet
-    ├── train_llama.py       # §4.2 — Llama-3.2-1B-Instruct + matching + KD
-    ├── eval_refusal.py      # §4.2 — K=0 generation + WildGuard + probes
-    └── iterated_ablation.py # §4.3 — Arditi K≥1 attack curve
+    ├── train_llama.py       # Llama-3.2-1B-Instruct + matching + KD
+    ├── eval_refusal.py      # K=0 generation + WildGuard + probes
+    └── iterated_ablation.py # Arditi-style K≥1 ablation attack curve
 ```
 
 ## Install
@@ -71,7 +71,7 @@ pip install -e ".[wildguard]"
 Tested on Python 3.10+, PyTorch 2.1+, single A100 (refusal training) /
 single L4 (sentiment).
 
-## Sentiment proof-of-concept (§4.1)
+## Sentiment proof-of-concept
 
 A lightweight sanity check: same losses, smaller model (GPT-2, 124M),
 unambiguous labels (IMDB pos/neg). Establishes that mean matching closes
@@ -83,7 +83,7 @@ in the refusal experiments.
 # Baseline (no matching loss)
 python -m intervention_robust_refusal.sentiment.train_gpt2 --match none --out_dir ckpt/gpt2_baseline
 
-# Mean L2, multi-layer, mixed readout (paper headline at λ=100)
+# Mean L2, multi-layer, mixed readout (headline configuration at λ=100)
 python -m intervention_robust_refusal.sentiment.train_gpt2 \
     --match mean --mean_penalty_type l2 --lambda_mean 100 \
     --multi_layer 1 \
@@ -112,11 +112,11 @@ varied. Evaluate (perplexity + mean gap + linear/MLP probe):
 python -m intervention_robust_refusal.sentiment.eval_sentiment --model ckpt/gpt2_mean_l2_lam100
 
 # Compare against post-hoc LEACE / INLP on frozen baseline embeddings
-# (paper Table: linear probe 0.79 → LEACE 0.57, INLP 0.62)
+# (reference numbers: linear probe 0.79 → LEACE 0.57, INLP 0.62)
 python -m intervention_robust_refusal.sentiment.eval_sentiment --model gpt2 --baseline gpt2
 ```
 
-## Refusal main results (§4.2, §4.3)
+## Refusal main results
 
 ### 1. Build the dataset
 
@@ -131,9 +131,8 @@ python -m intervention_robust_refusal.refusal.data_pipeline \
     --source_model meta-llama/Llama-3.2-1B-Instruct \
     --out_dir data/refusal
 
-# Paper setting: drop rows where the source model disagrees with the gold
-# label (§4.2 "restrict to ... drop rows where the source model's behavior
-# disagrees with the prompt label")
+# Filtered setting: drop rows where the source model's behaviour disagrees
+# with the gold prompt label (used for the main training runs).
 python -m intervention_robust_refusal.refusal.data_pipeline \
     --source_model meta-llama/Llama-3.2-1B-Instruct \
     --out_dir data/refusal --filter_train
@@ -172,7 +171,7 @@ python -m intervention_robust_refusal.refusal.train_llama \
     --kd_lambda 1.0 --kd_T 1.0 \
     --out_dir ckpt/llama_l1_kd
 
-# Cov L2 + KD — paper headline configuration
+# Cov L2 + KD — headline configuration
 python -m intervention_robust_refusal.refusal.train_llama \
     --data_dir data/refusal \
     --match cov --cov_penalty_type l2 --lambda_cov 100 \
@@ -186,7 +185,7 @@ Defaults: `lr=2e-5`, `weight_decay=0.01`, `micro_batch=2 × grad_accum=64`
 (effective batch 128), 20 epochs, bf16, multi-layer matching across every
 transformer block.
 
-### 3. K=0 behavioural evaluation (§4.2)
+### 3. K=0 behavioural evaluation
 
 Greedy generation on the holdout + WildGuard refusal-rate, plus linear and
 MLP probes on the chat-template last-token hidden states at the auto-
@@ -201,7 +200,7 @@ for M in meta-llama/Llama-3.2-1B-Instruct meta-llama/Llama-3.2-1B \
 done
 ```
 
-### 4. Iterated single-direction ablation (§4.3)
+### 4. Iterated single-direction ablation
 
 The attacker's loop, extending Arditi's K=1 protocol to K≥1 by re-extracting
 mean-difference candidates *after* each ablated direction is installed.
@@ -257,11 +256,11 @@ positions instead. Randomising the pool per sample (last-token / random
 token subset / chat-template positions / uniform mean) forces the model to
 reshape representations broadly, not at a single locus.
 
-In the refusal experiments, the paper found that **alignment of the pool
-with the position the attacker uses matters** — sentence-pool matching
-collapses K=0 behaviour while leaving the chat-template position
-linearly classifiable, whereas chat-template pool matching closes that
-exact loophole (`shared/readouts.py:mixed_batch_readout`).
+In the refusal experiments, **alignment of the pool with the position the
+attacker uses matters** — sentence-pool matching collapses K=0 behaviour
+while leaving the chat-template position linearly classifiable, whereas
+chat-template pool matching closes that exact loophole
+(`shared/readouts.py:mixed_batch_readout`).
 
 ### Why the LM loss runs over the entire prompt with `add_generation_prompt=True`?
 
@@ -301,7 +300,7 @@ the iterated-ablation search ends up picking directions
 
 A naive K-greedy attack — "pick whichever direction most suppresses refusal
 on harmful prompts" — would happily nuke the harmless distribution too. The
-paper's scoring (from Arditi) filters candidates with three signals:
+scoring (extending Arditi) filters candidates with three signals:
 
   - **refusal log-odds** on harmful prompts (lower = better suppression)
   - **KL(baseline ‖ ablated)** on harmless prompts (must stay below

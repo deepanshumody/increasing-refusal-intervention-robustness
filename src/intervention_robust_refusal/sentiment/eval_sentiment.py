@@ -4,14 +4,15 @@ If --baseline is given, also reports LEACE and INLP applied to that baseline's
 frozen embeddings (the upper bound on linear erasure).
 """
 import argparse
+
 import numpy as np
 import torch
 from datasets import load_dataset
 from transformers import GPT2LMHeadModel, GPT2TokenizerFast
 
+from intervention_robust_refusal.shared.erasure import inlp_apply, inlp_fit, leace_apply, leace_fit
 from intervention_robust_refusal.shared.hooks import ResidualCapture
 from intervention_robust_refusal.shared.probes import linear_probe, mlp_probe
-from intervention_robust_refusal.shared.erasure import leace_fit, leace_apply, inlp_fit, inlp_apply
 
 
 @torch.no_grad()
@@ -62,12 +63,14 @@ def main():
 
     train = load_dataset("imdb", split="train").shuffle(seed=42).select(range(args.max_eval))
     test = load_dataset("imdb", split="test").shuffle(seed=42).select(range(args.max_eval))
-    ytr = np.array(train["label"]); yte = np.array(test["label"])
+    ytr = np.array(train["label"])
+    yte = np.array(test["label"])
 
     Xtr = extract_features(model, tok, train["text"], args.layer, device)
     Xte = extract_features(model, tok, test["text"], args.layer, device)
 
-    mu_p = Xtr[ytr == 1].mean(0); mu_n = Xtr[ytr == 0].mean(0)
+    mu_p = Xtr[ytr == 1].mean(0)
+    mu_n = Xtr[ytr == 0].mean(0)
     print(f"=== {args.model} (layer {args.layer}) ===")
     print(f"L2 mean gap: {np.linalg.norm(mu_p - mu_n):.4f}")
     print(f"Linear probe acc: {linear_probe(Xtr, ytr, Xte, yte):.4f}")
@@ -83,13 +86,15 @@ def main():
         bm = GPT2LMHeadModel.from_pretrained(args.baseline).to(device)
         Xtr_b = extract_features(bm, bt, train["text"], args.layer, device)
         Xte_b = extract_features(bm, bt, test["text"], args.layer, device)
-        mu_b_p = Xtr_b[ytr == 1].mean(0); mu_b_n = Xtr_b[ytr == 0].mean(0)
+        mu_b_p = Xtr_b[ytr == 1].mean(0)
+        mu_b_n = Xtr_b[ytr == 0].mean(0)
         print(f"\n=== Baseline {args.baseline} frozen embeddings (layer {args.layer}) ===")
         print(f"L2 mean gap: {np.linalg.norm(mu_b_p - mu_b_n):.4f}")
         print(f"Linear probe acc: {linear_probe(Xtr_b, ytr, Xte_b, yte):.4f}")
 
         mu, P = leace_fit(Xtr_b, ytr)
-        print(f"LEACE linear probe acc: {linear_probe(leace_apply(Xtr_b, mu, P), ytr, leace_apply(Xte_b, mu, P), yte):.4f}")
+        leace_acc = linear_probe(leace_apply(Xtr_b, mu, P), ytr, leace_apply(Xte_b, mu, P), yte)
+        print(f"LEACE linear probe acc: {leace_acc:.4f}")
 
         Pin = inlp_fit(Xtr_b, ytr)
         print(f"INLP  linear probe acc: {linear_probe(inlp_apply(Xtr_b, Pin), ytr, inlp_apply(Xte_b, Pin), yte):.4f}")

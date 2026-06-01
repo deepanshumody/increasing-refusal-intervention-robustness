@@ -5,7 +5,7 @@ to recover this concept from hidden states?" — the lower the probe accuracy
 the more thoroughly the matching loss has redistributed the class signal.
 Both probes standardise features first; the linear probe is L2-regularised
 logistic regression with balanced class weights, and the MLP is a small
-two-hidden-layer net with early stopping (paper §4.1).
+two-hidden-layer net with early stopping.
 """
 from __future__ import annotations
 

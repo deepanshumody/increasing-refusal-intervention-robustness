@@ -13,7 +13,7 @@ def score_refusals(classifier, prompts, responses):
     {prompt, response} and returns dicts with `response_refusal`,
     `prompt_harmfulness`, `response_harmfulness` and `is_parsing_error`.
     """
-    items = [{"prompt": p, "response": r} for p, r in zip(prompts, responses)]
+    items = [{"prompt": p, "response": r} for p, r in zip(prompts, responses, strict=False)]
     results = classifier.classify(items)
     out = []
     for r in results:
@@ -27,5 +27,5 @@ def score_refusals(classifier, prompts, responses):
 
 def score_full(classifier, prompts, responses):
     """Returns list of dicts with all WildGuard fields per item (no parsing)."""
-    items = [{"prompt": p, "response": r} for p, r in zip(prompts, responses)]
+    items = [{"prompt": p, "response": r} for p, r in zip(prompts, responses, strict=False)]
     return classifier.classify(items)

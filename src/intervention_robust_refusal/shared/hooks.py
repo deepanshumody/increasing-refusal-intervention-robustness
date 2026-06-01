@@ -19,7 +19,6 @@ raw direction vectors so multi-direction ablation stays a true projector.
 from __future__ import annotations
 
 from contextlib import contextmanager, nullcontext
-from typing import List
 
 import numpy as np
 import torch
@@ -94,7 +93,7 @@ def ablation_context(model, directions):
     blocks, kind = get_blocks(model)
     if kind != "llama":
         raise ValueError("ablation_context currently supports Llama-style models only")
-    handles: List = []
+    handles: list = []
 
     def make_pre_hook(dirs):
         def hook(module, inp, dirs=dirs):

@@ -1,5 +1,10 @@
 # Increasing the Intervention-Robustness of Refusal in Open-Weight LLMs
 
+[![CI](https://github.com/deepanshumody/increasing-refusal-intervention-robustness/actions/workflows/ci.yml/badge.svg)](https://github.com/deepanshumody/increasing-refusal-intervention-robustness/actions/workflows/ci.yml)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](./LICENSE)
+[![Code style: Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
 **Authors.** Deepanshu Mody, Acey Vogelstein, Jonathan Merchan.
 All three contributed as students at New York University — Deepanshu Mody
 (M.S. Data Science), Acey Vogelstein (M.S. Data Science), Jonathan Merchan
@@ -39,6 +44,66 @@ refusal suppression threshold, vs. **K=1** for unmodified Instruct — at least
 a 16× increase in the rank of the linear attack required to disable refusal,
 while preserving the K=0 refusal behaviour of the original Instruct model.
 
+## Results
+
+Numbers below are for `meta-llama/Llama-3.2-1B-Instruct` on WildGuardMix
+(refusal) and GPT-2 small on IMDB (sentiment). Refusal behaviour is measured on
+a held-out **100 harmful / 100 harmless** split with greedy (deterministic)
+decoding at seed 42, scored by WildGuard-7B; concept signal is measured with
+frozen linear/MLP probes. The 30% suppression threshold is rounded to absorb the
+binomial sampling noise of a 100-prompt evaluation set. The method and full
+evaluation are written up in a paper currently under review at ICML 2026 (link
+to be added once it is public).
+
+**Iterated single-direction ablation (the headline).** Smallest number of
+ablated directions `K` needed to push harmful-prompt refusal below the 30%
+suppression threshold (Arditi's K=1 attack rate on Instruct). Higher `K` ⇒ a
+higher-rank, more coordinated linear attack is required to disable refusal.
+
+| Model | K to suppress refusal |
+| --- | :---: |
+| Llama-3.2-1B-Instruct (baseline) | **1** |
+| Llama-3.2-1B (base) | 8 |
+| `L1 + KD` | 11 |
+| **`Cov L2 + KD`** (ours) | **≥ 16** |
+
+`Cov L2 + KD` never crosses the threshold within the 16-iteration attack budget
+(minimum 37% harmful refusal at K=15) — at least a **16× increase** in attack
+rank over the unmodified Instruct model.
+
+**K=0 behaviour is preserved.** Refusal rates before any ablation (greedy
+generation, WildGuard-7B scored):
+
+| Condition | Harmful refusal | Harmless refusal |
+| --- | :---: | :---: |
+| Llama-3.2-1B-Instruct (baseline) | 100% | 15% |
+| `L1` (sentence-pool, no KD) | 23% | 53% |
+| `Cov L2` (sentence-pool, no KD) | 63% | 73% |
+| `L1 + KD` | 99% | 43% |
+| **`Cov L2 + KD`** (ours) | 98% | 18% |
+
+Sentence-pool matching without KD collapses behaviour; adding KD with
+chat-template-aligned matching restores the Instruct baseline (`Cov L2 + KD`:
+100/15 → 98/18). `Cov L2 + KD` is also the *only* condition that reorganises
+the linear structure rather than masking it — it lowers the matched-pool linear
+probe accuracy from 0.991 to 0.955, where Instruct's probe exceeds 0.97 at
+exactly the positions the attacker targets.
+
+**Sentiment proof-of-concept (GPT-2 / IMDB).** A lightweight check that
+training-time mean matching is *not* concept erasure. Held-out linear-probe
+accuracy (chance = 0.50):
+
+| Method | Linear-probe accuracy |
+| --- | :---: |
+| Baseline GPT-2 | 0.79 |
+| Training-time mean matching (λ=100) | 0.76 |
+| LEACE — post-hoc, upper bound on linear erasure | 0.57 |
+| INLP — post-hoc | 0.62 |
+
+Mean matching closes the empirical class-mean gap by >90% yet barely moves the
+probe (0.79 → 0.76), staying well above the LEACE/INLP erasure bounds — which
+motivates the covariance term and chat-template pooling used for refusal.
+
 ## Repository layout
 
 ```
@@ -71,6 +136,21 @@ pip install -e ".[wildguard]"
 
 Tested on Python 3.10+, PyTorch 2.1+, single A100 (refusal training) /
 single L4 (sentiment).
+
+## Development
+
+```bash
+pip install -e ".[dev]"   # adds pytest + ruff
+pytest                    # CPU-only unit suite — no GPU, no model/dataset downloads
+ruff check .              # lint
+```
+
+The test suite in [`tests/`](./tests) exercises the core math on small synthetic
+tensors — the matching losses (mean/covariance/KD), the Arditi-style projection
+and QR-orthonormalisation, the pooling readouts, and the LEACE/INLP erasure
+baselines — so it runs in seconds without a GPU or any downloads. Continuous
+integration runs lint and the full suite on Python 3.10–3.12 on every push and
+pull request ([`.github/workflows/ci.yml`](./.github/workflows/ci.yml)).
 
 ## Sentiment proof-of-concept
 

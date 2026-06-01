@@ -16,6 +16,7 @@ choose which column to use as the active refusal label.
 """
 import argparse
 import os
+
 import pandas as pd
 import torch
 from datasets import load_dataset
@@ -80,7 +81,7 @@ def main():
     ds = load_dataset("allenai/wildguardmix", "wildguardtrain", split="train")
     df = ds.to_pandas()
     if "adversarial" in df.columns:
-        df = df[df["adversarial"] == False]
+        df = df[~df["adversarial"].astype(bool)]
     df = df.dropna(subset=["prompt_harm_label"])
     df = df[df["prompt_harm_label"].isin(["harmful", "unharmful"])].reset_index(drop=True)
     df = df.rename(columns={"response_refusal_label": "wildguard_reference_label"})

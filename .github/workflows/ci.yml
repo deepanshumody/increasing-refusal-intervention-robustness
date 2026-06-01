@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Least privilege: this workflow only checks out, lints, and tests.
+permissions:
+  contents: read
+
+# Cancel superseded PR runs; let main builds always finish (for the status badge).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install ruff
+        # Pin to the minor used locally so a new ruff release can't redden main
+        # without a code change.
+        run: pip install "ruff==0.12.*"
+      - name: Lint
+        run: ruff check .
+
+  test:
+    name: Test (py${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+      - name: Install CPU PyTorch
+        # Pull the CPU wheel explicitly so CI never tries to fetch CUDA builds.
+        run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Install package (test extras, no wildguard)
+        run: pip install -e ".[dev]"
+      - name: Run tests
+        run: pytest -q

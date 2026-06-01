@@ -1,6 +1,6 @@
 """Fine-tune GPT-2 small on IMDB with an optional class-conditional matching loss.
 
-Sentiment proof-of-concept for §4.1. The loss is the standard causal-LM loss
+Sentiment proof-of-concept. The loss is the standard causal-LM loss
 optionally augmented with a mean- or covariance-matching penalty over class-
 conditional pooled hidden states (positive vs. negative reviews). Tokenization
 is over raw review text — no chat template — and the LM loss covers the entire

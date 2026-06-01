@@ -14,6 +14,24 @@ authors = [
   { name = "Acey Vogelstein" },
   { name = "Jonathan Merchan" },
 ]
+keywords = [
+  "large language models",
+  "interpretability",
+  "alignment",
+  "refusal",
+  "concept erasure",
+  "intervention robustness",
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
 dependencies = [
   "torch>=2.1",
   "transformers>=4.40",
@@ -24,10 +42,35 @@ dependencies = [
   "numpy>=1.24",
 ]
 
+[project.optional-dependencies]
 # WildGuard ships its own (heavy) vLLM dependency stack; keep it optional so
 # the rest of the code is installable in lightweight environments.
-[project.optional-dependencies]
-wildguard = ["wildguard"]
+wildguard = ["wildguard>=1.0"]
+# Tooling for tests + linting (the CPU-only unit suite needs neither GPU nor wildguard).
+dev = ["pytest>=7.0", "ruff>=0.4"]
+
+[project.urls]
+Repository = "https://github.com/deepanshumody/increasing-refusal-intervention-robustness"
+Explainer = "https://deepanshumody.github.io/increasing-refusal-intervention-robustness/refusal-robustness-explainer.html"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "B", "UP"]
+# `l`/`p` are conventional names for (layer, position) throughout the math code.
+ignore = ["E741"]
+
+[tool.pytest.ini_options]
+# Make the src-layout package importable without an editable install.
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = [
+  # SWIG-based transitive deps emit these on import; not from this project.
+  "ignore:builtin type .* has no __module__ attribute:DeprecationWarning",
+]

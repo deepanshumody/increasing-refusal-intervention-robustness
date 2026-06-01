@@ -4,7 +4,7 @@ These are not part of the proposed training-time objective — they are *upper
 bounds on linear erasure of frozen representations*, used in the sentiment
 proof-of-concept to contextualise how much of the linear signal a training-
 time loss leaves on the table relative to a projection that has full access
-to the activations (paper §4.1).
+to the activations.
 
   - LEACE (Belrose et al. 2023) is the closed-form oblique projection that
     minimally perturbs ``X`` (in the whitened metric) while equalising the
@@ -61,7 +61,7 @@ def inlp_fit(X_train: np.ndarray, y_train: np.ndarray,
     P = np.eye(d)
     Xc = X_train.copy()
     for _ in range(n_iter):
-        clf = LogisticRegression(C=1.0, max_iter=1000, n_jobs=-1).fit(Xc, y_train)
+        clf = LogisticRegression(C=1.0, max_iter=1000).fit(Xc, y_train)
         if clf.score(Xc, y_train) < min_acc:
             break
         w = clf.coef_[0]

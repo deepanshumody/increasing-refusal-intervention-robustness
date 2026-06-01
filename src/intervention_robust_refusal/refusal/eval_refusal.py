@@ -4,8 +4,9 @@ probes on last-token chat-template hidden states at the auto-selected probe laye
 Probe layer default = int(0.65 * num_hidden_layers) (matches existing pipeline).
 """
 import argparse
-import os
 import json
+import os
+
 import numpy as np
 import pandas as pd
 import torch

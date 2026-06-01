@@ -4,7 +4,7 @@ title: "Increasing the Intervention-Robustness of Refusal in Open-Weight Languag
 authors:
   - family-names: Mody
     given-names: Deepanshu
-    email: deepanshumody26@gmail.com
+    email: dm6262@nyu.edu
     affiliation: "New York University (M.S. Data Science, student)"
   - family-names: Vogelstein
     given-names: Acey
@@ -12,7 +12,7 @@ authors:
   - family-names: Merchan
     given-names: Jonathan
     affiliation: "New York University (Ph.D. Linguistics, student)"
-date-released: 2025-01-01
+date-released: 2026-01-01
 license: Apache-2.0
 repository-code: "https://github.com/deepanshumody/increasing-refusal-intervention-robustness"
 type: software
@@ -33,5 +33,5 @@ references:
         given-names: Acey
       - family-names: Merchan
         given-names: Jonathan
-    year: 2025
-    notes: "Under review, International Conference on Machine Learning (ICML) 2025"
+    year: 2026
+    notes: "Under review, International Conference on Machine Learning (ICML) 2026"

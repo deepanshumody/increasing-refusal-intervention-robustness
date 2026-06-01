@@ -341,17 +341,6 @@ sweep `{10, 50, 100, 500}` meaningful across both
 
 ## Citation
 
-If you build on this code, please cite the paper:
-
-```bibtex
-@misc{mody2025refusal,
-  title  = {Increasing the Intervention-Robustness of Refusal in Open-Weight Language Models},
-  author = {Mody, Deepanshu and Vogelstein, Acey and Merchan, Jonathan},
-  year   = {2025},
-  note   = {Under review, ICML 2025}
-}
-```
-
 See [`CITATION.cff`](./CITATION.cff) for the machine-readable form (renders as
 a "Cite this repository" button on GitHub).
 

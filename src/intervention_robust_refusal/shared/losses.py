@@ -14,11 +14,11 @@ behavior while the matching loss reshapes the residual stream underneath.
 """
 from __future__ import annotations
 
-from typing import Callable, Literal, Sequence
+from collections.abc import Callable, Sequence
+from typing import Literal
 
 import torch
 import torch.nn.functional as F
-
 
 PenaltyType = Literal["l1", "l2"]
 PenaltyKind = Literal["mean", "cov"]

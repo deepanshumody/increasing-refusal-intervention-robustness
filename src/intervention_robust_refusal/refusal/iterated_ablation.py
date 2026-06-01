@@ -28,14 +28,16 @@ import os
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from intervention_robust_refusal.shared.hooks import (
-    ResidualCapture, prepare_directions, ablation_context,
-    ablation_context_from_list, add_block_input_addition_hook, get_blocks)
-from intervention_robust_refusal.shared.wildguard import load_classifier
 from intervention_robust_refusal.refusal.eval_refusal import evaluate_refusal
+from intervention_robust_refusal.shared.hooks import (
+    ResidualCapture,
+    ablation_context_from_list,
+    add_block_input_addition_hook,
+    get_blocks,
+)
+from intervention_robust_refusal.shared.wildguard import load_classifier
 
 
 def resolve_refusal_token_ids(tokenizer, token_strings=("I",)):

@@ -16,7 +16,7 @@ from __future__ import annotations
 import torch
 
 
-def pooled_last_hidden(h: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
+def masked_mean_pool(h: torch.Tensor, attention_mask: torch.Tensor) -> torch.Tensor:
     """Mean of hidden states over attended (non-pad) positions: ``[B, D]``."""
     m = attention_mask.unsqueeze(-1).float()
     return (h * m).sum(1) / m.sum(1).clamp_min(1)
@@ -65,11 +65,11 @@ def mixed_batch_readout(
     ``random_pool_token_coverage`` fraction of attended tokens; with
     ``chat_template_pool_ratio`` use ``chat_template_pool_hidden`` at the given
     positions; the remainder fall through to a uniform mean over all attended
-    tokens (``pooled_last_hidden``).
+    tokens (``masked_mean_pool``).
 
     The three ratios must sum to at most 1.0 (any remainder goes to mean-pool).
     """
-    mean_pooled = pooled_last_hidden(h, attention_mask)
+    mean_pooled = masked_mean_pool(h, attention_mask)
     if random_pool_ratio == 0.0 and last_token_ratio == 0.0 and chat_template_pool_ratio == 0.0:
         return mean_pooled
 

@@ -10,12 +10,13 @@ Matches the existing pipeline:
 """
 import argparse
 import os
+
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import DataLoader, Dataset
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_linear_schedule_with_warmup
 
-from intervention_robust_refusal.shared.losses import per_layer_penalty, kd_kl_loss
+from intervention_robust_refusal.shared.losses import kd_kl_loss, per_layer_penalty
 from intervention_robust_refusal.shared.readouts import mixed_batch_readout
 
 
@@ -97,7 +98,8 @@ def main():
     if args.kd_lambda > 0:
         teacher = AutoModelForCausalLM.from_pretrained(args.source_model, torch_dtype=torch.bfloat16).to(device)
         teacher.eval()
-        for q in teacher.parameters(): q.requires_grad_(False)
+        for q in teacher.parameters():
+            q.requires_grad_(False)
 
     train_df = pd.read_parquet(os.path.join(args.data_dir, "train.parquet"))
     ds = RefusalDataset(train_df, tok, max_len=args.max_len)
@@ -160,7 +162,9 @@ def main():
 
             if (i + 1) % args.grad_accum == 0:
                 torch.nn.utils.clip_grad_norm_(student.parameters(), 1.0)
-                opt.step(); sched.step(); opt.zero_grad()
+                opt.step()
+                sched.step()
+                opt.zero_grad()
                 step += 1
                 if step % 10 == 0:
                     print(f"ep{epoch} step{step} lm={lm_loss.item():.4f} "

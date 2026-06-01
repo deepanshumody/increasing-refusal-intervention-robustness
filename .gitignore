@@ -15,3 +15,7 @@ outputs/
 *.npz
 .DS_Store
 .claude/
+
+# Unpublished paper drafts (under review — anonymized review copies must not
+# be distributed publicly). Add a de-anonymized version explicitly once published.
+*.pdf

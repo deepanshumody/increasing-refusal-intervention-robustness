@@ -419,11 +419,6 @@ makes `lambda_mean` and `lambda_cov` directly comparable and keeps the
 sweep `{10, 50, 100, 500}` meaningful across both
 (`shared/losses.py:compute_cov_penalty`).
 
-## Citation
-
-See [`CITATION.cff`](./CITATION.cff) for the machine-readable form (renders as
-a "Cite this repository" button on GitHub).
-
 ## License
 
 Released under the [Apache License 2.0](./LICENSE).

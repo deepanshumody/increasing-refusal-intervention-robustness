@@ -52,8 +52,8 @@ a held-out **100 harmful / 100 harmless** split with greedy (deterministic)
 decoding at seed 42, scored by WildGuard-7B; concept signal is measured with
 frozen linear/MLP probes. The 30% suppression threshold is rounded to absorb the
 binomial sampling noise of a 100-prompt evaluation set. The method and full
-evaluation are written up in a paper currently under review at ICML 2026 (link
-to be added once it is public).
+evaluation are written up in a paper (preprint link to be added once it is
+public).
 
 **Iterated single-direction ablation (the headline).** Smallest number of
 ablated directions `K` needed to push harmful-prompt refusal below the 30%
